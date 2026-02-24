@@ -11,6 +11,7 @@ interface ImageCarouselProps {
   images: string[];
   videoUrls?: string[];
   autoScrollInterval?: number;
+  disableFullscreen?: boolean;
 }
 
 function parseMedia(images: string[], videoUrls: string[] = []): MediaItem[] {
@@ -26,7 +27,7 @@ function parseMedia(images: string[], videoUrls: string[] = []): MediaItem[] {
   return items;
 }
 
-export default function ImageCarousel({ images, videoUrls = [], autoScrollInterval = 3000 }: ImageCarouselProps) {
+export default function ImageCarousel({ images, videoUrls = [], autoScrollInterval = 3000, disableFullscreen = false }: ImageCarouselProps) {
   const media = parseMedia(images, videoUrls);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
@@ -52,7 +53,7 @@ export default function ImageCarousel({ images, videoUrls = [], autoScrollInterv
   };
 
   const openFullscreen = (i: number) => {
-    if (closingRef.current) return;
+    if (closingRef.current || disableFullscreen) return;
     setFullscreen(true);
     setCurrentIndex(i);
     clearInterval(intervalRef.current);

@@ -168,6 +168,30 @@ export default function AdminPage() {
               {/* Action taken */}
               {r.actionTaken && <p className="text-[11px] text-primary bg-accent rounded px-2 py-1">📋 {r.actionTaken}</p>}
 
+              {/* Pending user updates */}
+              {r.userUpdates && r.userUpdates.filter((u: any) => u.status === "pending").length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-semibold text-vote-suspicious">📝 পেন্ডিং ইউজার আপডেট:</p>
+                  {r.userUpdates.filter((u: any) => u.status === "pending").map((upd: any) => (
+                    <div key={upd.id} className="bg-muted rounded px-2 py-1.5 flex items-start gap-2">
+                      <p className="text-[11px] flex-1">{upd.text}</p>
+                      <div className="flex gap-1 shrink-0">
+                        <button onClick={async () => {
+                          const updated = r.userUpdates!.map((u: any) => u.id === upd.id ? { ...u, status: "approved" } : u);
+                          await updateDoc(doc(db, "reports", r.id), { userUpdates: updated });
+                          toast.success("আপডেট অনুমোদিত");
+                        }} className="bg-badge-approved text-primary-foreground px-1.5 py-0.5 rounded text-[9px]"><CheckCircle size={10} /></button>
+                        <button onClick={async () => {
+                          const updated = r.userUpdates!.map((u: any) => u.id === upd.id ? { ...u, status: "rejected" } : u);
+                          await updateDoc(doc(db, "reports", r.id), { userUpdates: updated });
+                          toast.success("আপডেট প্রত্যাখ্যাত");
+                        }} className="bg-badge-rejected text-primary-foreground px-1.5 py-0.5 rounded text-[9px]"><XCircle size={10} /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex gap-1.5 flex-wrap">
                 {r.status !== "approved" && (
                   <button onClick={() => approveReport(r.id)} className="flex items-center gap-1 text-[10px] bg-badge-approved text-primary-foreground px-2 py-1 rounded"><CheckCircle size={10} /> অনুমোদন</button>

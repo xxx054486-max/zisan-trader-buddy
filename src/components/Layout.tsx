@@ -6,27 +6,37 @@ import { useIPAddress } from "@/hooks/useIPAddress";
 import { toast } from "sonner";
 
 const tabs = [
-  { path: "/", icon: Home, label: "হোম" },
-  { path: "/report", icon: PenSquare, label: "রিপোর্ট" },
-  { path: "/map", icon: Map, label: "ম্যাপ" },
-  { path: "/my-reports", icon: FolderOpen, label: "আমার" },
+  { path: "/", icon: Home, label: "Home" },
+  { path: "/report", icon: PenSquare, label: "Report" },
+  { path: "/map", icon: Map, label: "Map" },
+  { path: "/my-reports", icon: FolderOpen, label: "My Reports" },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { ip, locationInfo, loading: ipLoading } = useIPAddress();
+  const { ip, loading: ipLoading } = useIPAddress();
   const [ipExpanded, setIpExpanded] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationInfo, setLocationInfo] = useState("");
   const expandRef = useRef<HTMLDivElement>(null);
 
   const isTabPage = tabs.some((t) => t.path === location.pathname);
 
-  // Request location permission on load
+  // Request location permission on load and reverse geocode
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
-      (pos) => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserCoords({ lat: latitude, lng: longitude });
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=bn`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data.display_name) setLocationInfo(data.display_name);
+          })
+          .catch(() => {});
+      },
       () => {}
     );
   }, []);

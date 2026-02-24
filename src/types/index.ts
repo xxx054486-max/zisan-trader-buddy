@@ -14,6 +14,7 @@ export interface Report {
   evidenceLinks: string[];
   status: "pending" | "approved" | "rejected";
   actionTaken?: string;
+  userUpdates?: UserUpdate[];
   votes: {
     true: number;
     suspicious: number;
@@ -44,6 +45,13 @@ export interface UserProfile {
   email: string;
   role: "user" | "admin";
   disabled: boolean;
+  createdAt: Timestamp;
+}
+
+export interface UserUpdate {
+  id: string;
+  text: string;
+  status: "pending" | "approved" | "rejected";
   createdAt: Timestamp;
 }
 
