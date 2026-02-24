@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, onSnapshot, getDoc, updateDoc, increment, setDoc, deleteDoc } from "firebase/firestore";
+import { doc, onSnapshot, getDoc, updateDoc, increment, setDoc, deleteDoc, arrayUnion, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Report } from "@/types";
@@ -8,7 +8,7 @@ import CommentSection from "@/components/CommentSection";
 import ImageCarousel from "@/components/ImageCarousel";
 import LinkPreview from "@/components/LinkPreview";
 import LinkifyText from "@/components/LinkifyText";
-import { ArrowLeft, MapPin, CheckCircle, AlertTriangle, HelpCircle, Share2, Loader2, User, Info } from "lucide-react";
+import { ArrowLeft, MapPin, CheckCircle, AlertTriangle, HelpCircle, Share2, Loader2, User, Info, Plus, Send } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ReportDetailPage() {
@@ -19,6 +19,9 @@ export default function ReportDetailPage() {
   const [loading, setLoading] = useState(true);
   const [userVote, setUserVote] = useState<string | null>(null);
   const [voting, setVoting] = useState(false);
+  const [showUpdateInput, setShowUpdateInput] = useState(false);
+  const [updateText, setUpdateText] = useState("");
+  const [submittingUpdate, setSubmittingUpdate] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -63,10 +66,33 @@ export default function ReportDetailPage() {
     else { navigator.clipboard.writeText(url); toast.success("Link copied"); }
   };
 
+  const handleSubmitUpdate = async () => {
+    if (!updateText.trim() || !id || !user) return;
+    setSubmittingUpdate(true);
+    try {
+      const newUpdate = {
+        id: Date.now().toString(),
+        text: updateText.trim(),
+        status: "pending",
+        createdAt: Timestamp.now(),
+      };
+      await updateDoc(doc(db, "reports", id), {
+        userUpdates: arrayUnion(newUpdate),
+      });
+      toast.success("আপডেট জমা হয়েছে, অ্যাডমিন যাচাই করার পর দেখাবে");
+      setUpdateText("");
+      setShowUpdateInput(false);
+    } catch { toast.error("আপডেট জমা দিতে সমস্যা হয়েছে"); }
+    finally { setSubmittingUpdate(false); }
+  };
+
   if (loading) return <div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin text-primary" size={32} /></div>;
   if (!report) return <div className="flex flex-col items-center justify-center h-screen"><p className="text-lg font-semibold">রিপোর্ট পাওয়া যায়নি</p><button onClick={() => navigate("/")} className="text-primary mt-2 text-sm font-medium">← হোমে ফিরুন</button></div>;
 
   const date = report.createdAt?.toDate ? report.createdAt.toDate().toLocaleDateString("bn-BD") : "অজানা তারিখ";
+  const isOwner = user && report.userId === user.uid;
+  const approvedUpdates = (report.userUpdates || []).filter((u) => u.status === "approved");
+
   const voteButtons = [
     { type: "true" as const, label: "সত্য", icon: CheckCircle },
     { type: "suspicious" as const, label: "সন্দেহজনক", icon: AlertTriangle },
@@ -115,6 +141,21 @@ export default function ReportDetailPage() {
             </div>
           )}
 
+          {/* Approved User Updates */}
+          {approvedUpdates.length > 0 && (
+            <div className="mx-4 mb-3 space-y-2">
+              {approvedUpdates.map((upd) => (
+                <div key={upd.id} className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 flex items-start gap-2">
+                  <Info size={14} className="text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] font-semibold text-primary mb-0.5">রিপোর্টারের আপডেট</p>
+                    <p className="text-[12px] text-foreground">{upd.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {(allImages.length > 0 || videoLinks.length > 0) && (
             <ImageCarousel images={allImages} videoUrls={videoLinks} />
           )}
@@ -129,6 +170,33 @@ export default function ReportDetailPage() {
             <MapPin size={14} className="text-primary shrink-0" />
             <span>{report.location?.address || "অজানা অবস্থান"}</span>
           </div>
+
+          {/* User Update Button (only for report owner) */}
+          {isOwner && (
+            <div className="px-4 pb-3">
+              {showUpdateInput ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={updateText}
+                    onChange={(e) => setUpdateText(e.target.value)}
+                    placeholder="বর্তমান অবস্থা বা আপডেট লিখুন..."
+                    rows={3}
+                    className="w-full border border-input rounded-lg px-3 py-2 text-sm bg-background resize-none outline-none focus:border-primary"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={handleSubmitUpdate} disabled={submittingUpdate || !updateText.trim()} className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-[12px] font-semibold flex items-center justify-center gap-1 disabled:opacity-50">
+                      {submittingUpdate ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} আপডেট জমা দিন
+                    </button>
+                    <button onClick={() => { setShowUpdateInput(false); setUpdateText(""); }} className="px-4 py-2 rounded-xl bg-muted text-foreground text-[12px] font-semibold">বাতিল</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setShowUpdateInput(true)} className="w-full py-2.5 rounded-xl bg-primary/10 text-primary text-[13px] font-semibold flex items-center justify-center gap-1.5">
+                  <Plus size={14} /> আপডেট যোগ করুন
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex border-t border-border">
             {voteButtons.map((v) => (

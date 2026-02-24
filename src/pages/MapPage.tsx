@@ -87,6 +87,22 @@ export default function MapPage() {
         </div>
       `);
 
+      marker.on('popupopen', () => {
+        const popup = marker.getPopup();
+        if (popup) {
+          const el = popup.getElement();
+          if (el) {
+            const link = el.querySelector('a');
+            if (link) {
+              link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigate(`/reports/${report.id}`);
+              });
+            }
+          }
+        }
+      });
+
       markersRef.current.push(marker);
     });
   }, [reports, filterType]);

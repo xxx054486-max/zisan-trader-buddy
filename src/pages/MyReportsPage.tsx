@@ -193,7 +193,7 @@ export default function MyReportsPage() {
                   <>
                     {allImages.length > 0 && (
                       <div onClick={(e) => e.stopPropagation()}>
-                        <ImageCarousel images={allImages} />
+                        <ImageCarousel images={allImages} disableFullscreen />
                       </div>
                     )}
                   </>

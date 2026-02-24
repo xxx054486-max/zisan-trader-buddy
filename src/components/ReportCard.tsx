@@ -103,10 +103,22 @@ export default function ReportCard({ report, showStatus }: ReportCardProps) {
         </div>
       )}
 
+      {/* Approved User Updates */}
+      {report.userUpdates && report.userUpdates.filter((u) => u.status === "approved").length > 0 && (
+        <div className="mx-3 mb-2 space-y-1">
+          {report.userUpdates.filter((u) => u.status === "approved").map((upd) => (
+            <div key={upd.id} className="bg-primary/5 border border-primary/20 rounded-lg px-3 py-1.5 flex items-start gap-2">
+              <Info size={12} className="text-primary shrink-0 mt-0.5" />
+              <p className="text-[11px] text-foreground">{upd.text}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Evidence - images + videos in same carousel */}
       {(allImages.length > 0 || videoLinks.length > 0) && (
         <div onClick={(e) => e.stopPropagation()}>
-          <ImageCarousel images={allImages} videoUrls={videoLinks} />
+          <ImageCarousel images={allImages} videoUrls={videoLinks} disableFullscreen />
         </div>
       )}
 
