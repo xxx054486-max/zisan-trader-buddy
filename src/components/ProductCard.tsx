@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { Product } from '@/hooks/useFirestoreData';
-import { useCart } from '@/contexts/CartContext';
 import { motion } from 'framer-motion';
 
 interface ProductCardProps {
@@ -9,22 +8,9 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { addToCart } = useCart();
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await addToCart({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.originalPrice,
-      image: product.images?.[0] || '',
-      stock: product.stock,
-    });
-  };
 
   return (
     <motion.div whileHover={{ y: -2 }} className="group h-full">
@@ -40,20 +26,19 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className="p-3 flex flex-col flex-1">
           <p className="text-xs text-muted-foreground mb-0.5">{product.brand}</p>
-          <h3 className="text-sm font-medium line-clamp-2 mb-2 flex-1">{product.name}</h3>
+          <h3 className="text-sm font-medium truncate mb-2">{product.name}</h3>
           <div className="flex items-center gap-1 mb-2">
-            <Star size={11} className="fill-accent text-accent" />
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map(s => (
+                <Star key={s} size={10} className={s <= Math.floor(product.rating || 0) ? 'fill-accent text-accent' : 'text-muted'} />
+              ))}
+            </div>
             <span className="text-xs font-medium">{product.rating || 0}</span>
             <span className="text-xs text-muted-foreground">({product.reviewCount || 0})</span>
           </div>
-          <div className="flex items-center justify-between mt-auto">
-            <div>
-              <span className="font-bold text-sm">৳{product.price?.toFixed(0)}</span>
-              {product.originalPrice && <span className="text-xs text-muted-foreground line-through ml-1">৳{product.originalPrice?.toFixed(0)}</span>}
-            </div>
-            <button onClick={handleAddToCart} className="w-7 h-7 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-              <ShoppingCart size={13} />
-            </button>
+          <div className="flex items-center mt-auto">
+            <span className="font-bold text-sm">৳{product.price?.toFixed(0)}</span>
+            {product.originalPrice && <span className="text-xs text-muted-foreground line-through ml-1">৳{product.originalPrice?.toFixed(0)}</span>}
           </div>
         </div>
       </Link>

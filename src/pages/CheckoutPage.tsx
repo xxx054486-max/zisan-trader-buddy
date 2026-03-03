@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Check, MapPin, Truck, CreditCard, ChevronRight, Banknote, Smartphone, Copy, Upload, ImageIcon, Tag, X, Gift } from 'lucide-react';
+import { Check, MapPin, Truck, CreditCard, ChevronRight, Banknote, Smartphone, Copy, Upload, ImageIcon, Tag, X, Gift, Shield, RotateCcw, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const steps = [
@@ -217,7 +217,8 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-screen-md mx-auto px-4 py-5 pb-nav lg:pb-8">
-      <h1 className="font-bold text-xl mb-5">Checkout</h1>
+      <h1 className="font-bold text-xl mb-2">Checkout</h1>
+      <p className="text-sm text-muted-foreground mb-5">আপনার অর্ডার নিশ্চিত করুন</p>
 
       {/* Step Indicator */}
       <div className="flex items-center mb-6">
@@ -402,6 +403,13 @@ export default function CheckoutPage() {
             <div className="flex justify-between"><span className="text-muted-foreground">Delivery ({deliveryOpt.label})</span><span>৳{deliveryCharge}</span></div>
             {discountAmount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-৳{discountAmount.toFixed(0)}</span></div>}
             <div className="flex justify-between font-bold text-base border-t border-border pt-2"><span>Total</span><span className="text-primary">৳{finalTotal.toFixed(0)}</span></div>
+          </div>
+
+          {/* Trust badges on checkout */}
+          <div className="flex items-center justify-center gap-4 py-3 text-muted-foreground">
+            <div className="flex items-center gap-1 text-[10px]"><Shield size={12} className="text-green-500" /> Secure</div>
+            <div className="flex items-center gap-1 text-[10px]"><RotateCcw size={12} className="text-blue-500" /> ৭ দিন রিটার্ন</div>
+            <div className="flex items-center gap-1 text-[10px]"><CheckCircle size={12} className="text-emerald-500" /> ১০০% অরিজিনাল</div>
           </div>
 
           <div className="flex gap-3">
