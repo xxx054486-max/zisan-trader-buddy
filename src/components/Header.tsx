@@ -172,7 +172,7 @@ export default function Header() {
             <form onSubmit={handleSearch} className="relative flex gap-2">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder={placeholderText} className="pl-9 pr-16 rounded-xl bg-muted border-0" />
+                <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder={placeholderText} className="pl-9 pr-20 rounded-xl bg-muted border-0 truncate" />
                 <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
                   <Search size={12} /> Search
                 </button>
@@ -241,10 +241,16 @@ export default function Header() {
             {/* Price Range */}
             <div>
               <h3 className="font-semibold text-sm mb-3">Price Range</h3>
-              <Slider value={priceRange} min={0} max={50000} step={100} onValueChange={setPriceRange} />
-              <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                <span>৳{priceRange[0]}</span>
-                <span>৳{priceRange[1]}</span>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Min (৳)</label>
+                  <Input type="number" value={priceRange[0]} onChange={e => setPriceRange([Number(e.target.value) || 0, priceRange[1]])} className="h-9 rounded-xl" placeholder="0" />
+                </div>
+                <span className="text-muted-foreground mt-5">—</span>
+                <div className="flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Max (৳)</label>
+                  <Input type="number" value={priceRange[1]} onChange={e => setPriceRange([priceRange[0], Number(e.target.value) || 50000])} className="h-9 rounded-xl" placeholder="50000" />
+                </div>
               </div>
             </div>
 

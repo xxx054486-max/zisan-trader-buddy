@@ -218,12 +218,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-3 gap-3">
-              {[{ icon: Truck, label: 'Free Shipping', sub: '৳500+ orders' }, { icon: Shield, label: 'Secure Payment', sub: '100% protected' }, { icon: RotateCcw, label: 'Easy Returns', sub: '7-day policy' }].map(({ icon: Icon, label, sub }) => (
-                <div key={label} className="flex flex-col items-center text-center gap-1 p-3 bg-muted/50 rounded-xl"><Icon size={18} className="text-primary" /><span className="text-xs font-semibold">{label}</span><span className="text-[10px] text-muted-foreground">{sub}</span></div>
-              ))}
-            </div>
-
             <Accordion type="multiple" className="mt-5" defaultValue={['description']}>
               <AccordionItem value="description"><AccordionTrigger className="text-sm font-semibold">Description</AccordionTrigger><AccordionContent className="text-sm text-muted-foreground leading-relaxed">{product.description}</AccordionContent></AccordionItem>
             </Accordion>
