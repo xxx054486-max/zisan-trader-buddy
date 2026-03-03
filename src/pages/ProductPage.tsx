@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProducts } from '@/hooks/useFirestoreData';
 import { useCart } from '@/contexts/CartContext';
-import { Star, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ShoppingCart, ThumbsUp, CheckCircle, AlertTriangle, Share2 } from 'lucide-react';
+import { Star, Minus, Plus, ChevronLeft, ChevronRight, Truck, Shield, RotateCcw, ShoppingCart, ThumbsUp, CheckCircle, AlertTriangle, Share2, Banknote, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -191,6 +191,31 @@ export default function ProductPage() {
                 {addedToCart ? <><CheckCircle size={16} /> Added to Cart!</> : <><ShoppingCart size={16} /> Add to Cart</>}
               </Button>
               <Button className="flex-1 h-12 font-semibold" onClick={handleBuyNow} disabled={product.stock === 0}>Buy Now</Button>
+            </div>
+
+            {/* Trust Badges - আমাদের সুবিধাসমূহ */}
+            <div className="mt-6 bg-muted/40 rounded-2xl p-4 border border-border">
+              <h3 className="font-bold text-sm mb-3 text-foreground">আমাদের সুবিধাসমূহ</h3>
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  { icon: Banknote, label: 'ক্যাশ অন ডেলিভারি', sub: 'পণ্য পেয়ে পেমেন্ট', color: 'text-green-600 bg-green-500/10' },
+                  { icon: Smartphone, label: 'মোবাইল ব্যাংকিং', sub: 'bKash / Nagad', color: 'text-pink-500 bg-pink-500/10' },
+                  { icon: RotateCcw, label: '৭ দিনে পণ্য ফেরত', sub: 'সহজ রিটার্ন পলিসি', color: 'text-blue-500 bg-blue-500/10' },
+                  { icon: Shield, label: '১০০% টাকা ফেরত', sub: 'মানি ব্যাক গ্যারান্টি', color: 'text-amber-500 bg-amber-500/10' },
+                  { icon: CheckCircle, label: '৯৯% অরিজিনাল', sub: 'প্রোডাক্ট গ্যারান্টি', color: 'text-emerald-600 bg-emerald-500/10' },
+                  { icon: Truck, label: 'দ্রুত ডেলিভারি', sub: 'সারাদেশে পৌঁছে দেই', color: 'text-purple-500 bg-purple-500/10' },
+                ].map(({ icon: Icon, label, sub, color }) => (
+                  <div key={label} className="flex items-center gap-2.5 p-2.5 bg-card rounded-xl border border-border/50">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
+                      <Icon size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold leading-tight">{label}</p>
+                      <p className="text-[10px] text-muted-foreground">{sub}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-3">
