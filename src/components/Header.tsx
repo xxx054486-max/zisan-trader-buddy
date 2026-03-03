@@ -32,44 +32,11 @@ export default function Header() {
   const [filterOpen, setFilterOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const [displayedPlaceholder, setDisplayedPlaceholder] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
   const [sort, setSort] = useState('popular');
   const [priceRange, setPriceRange] = useState([0, 50000]);
   const [minRating, setMinRating] = useState(0);
-
-  const targetPlaceholder = products.length > 0
-    ? products[placeholderIndex % products.length]?.name?.slice(0, 30) ?? ''
-    : '';
-
-  // Smooth typewriter placeholder animation
-  useEffect(() => {
-    if (!targetPlaceholder) return;
-    setIsTyping(true);
-    setDisplayedPlaceholder('');
-    let i = 0;
-    // Erase first, then type — gives a smooth feel
-    const type = setInterval(() => {
-      i++;
-      setDisplayedPlaceholder(targetPlaceholder.slice(0, i));
-      if (i >= targetPlaceholder.length) {
-        clearInterval(type);
-        setIsTyping(false);
-      }
-    }, 55);
-    return () => clearInterval(type);
-  }, [targetPlaceholder]);
-
-  useEffect(() => {
-    if (products.length === 0) return;
-    const interval = setInterval(() => {
-      setPlaceholderIndex(prev => (prev + 1) % products.length);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [products.length]);
 
   const isAdmin = userData?.role === 'admin';
 
@@ -100,7 +67,7 @@ export default function Header() {
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
-    const q = searchQuery.trim() || products[placeholderIndex % products.length]?.name || '';
+    const q = searchQuery.trim();
     if (q) {
       navigate(`/search?q=${encodeURIComponent(q)}&sort=${sort}&minPrice=${priceRange[0]}&maxPrice=${priceRange[1]}&minRating=${minRating}`);
       setShowSuggestions(false);
@@ -177,7 +144,7 @@ export default function Header() {
             onChange={e => setSearchQuery(e.target.value)}
             onFocus={() => { setIsFocused(true); suggestions.length > 0 && setShowSuggestions(true); }}
             onBlur={() => setIsFocused(false)}
-            placeholder={displayedPlaceholder + (isTyping ? '▌' : '')}
+            placeholder="Search products..."
             className="flex-1 h-full bg-transparent outline-none px-2.5 text-sm placeholder:text-muted-foreground/70 truncate"
           />
 
