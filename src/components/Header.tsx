@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, LogOut, User, Package, Settings, HeadphonesIcon, Star, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, X, LogOut, User, Package, Star, SlidersHorizontal } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProducts, useSettings } from '@/hooks/useFirestoreData';
@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SORT_OPTIONS = [
@@ -35,13 +34,13 @@ export default function Header() {
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
-  // Filter states stored in header, passed via URL
   const [sort, setSort] = useState('popular');
   const [priceRange, setPriceRange] = useState([0, 50000]);
   const [minRating, setMinRating] = useState(0);
 
+  // Rotating placeholder — product name only, no icon/text prefix
   const placeholderText = products.length > 0
-    ? `Search "${products[placeholderIndex % products.length]?.name?.slice(0, 25)}..."`
+    ? products[placeholderIndex % products.length]?.name?.slice(0, 30) ?? 'Search products...'
     : 'Search products...';
 
   useEffect(() => {
@@ -69,12 +68,11 @@ export default function Header() {
     }
   }, [searchQuery, products]);
 
-  // Close suggestions when clicking outside (both desktop and mobile)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      const clickedOutsideDesktop = searchRef.current && !searchRef.current.contains(e.target as Node);
-      const clickedOutsideMobile = mobileSearchRef.current && !mobileSearchRef.current.contains(e.target as Node);
-      if (clickedOutsideDesktop && clickedOutsideMobile) setShowSuggestions(false);
+      const outsideDesktop = searchRef.current && !searchRef.current.contains(e.target as Node);
+      const outsideMobile = mobileSearchRef.current && !mobileSearchRef.current.contains(e.target as Node);
+      if (outsideDesktop && outsideMobile) setShowSuggestions(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -119,6 +117,33 @@ export default function Header() {
     );
   };
 
+  const SearchBar = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div ref={isMobile ? mobileSearchRef : searchRef} className="relative flex gap-2">
+      <form onSubmit={handleSearch} className="relative flex-1 flex gap-2">
+        <div className="relative flex-1">
+          <Input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            placeholder={placeholderText}
+            className={`pr-20 rounded-xl bg-muted border-0 truncate ${isMobile ? 'h-9 text-sm' : ''}`}
+          />
+          <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
+            <Search size={12} /> Search
+          </button>
+        </div>
+      </form>
+      <button
+        type="button"
+        onClick={() => setFilterOpen(true)}
+        className={`rounded-xl border border-border bg-card flex items-center justify-center shrink-0 hover:bg-muted transition-colors ${isMobile ? 'h-9 w-9' : 'h-10 w-10'}`}
+      >
+        <SlidersHorizontal size={14} className="text-muted-foreground" />
+      </button>
+      <SuggestionsDropdown />
+    </div>
+  );
+
   if (isAdmin) return null;
 
   return (
@@ -139,34 +164,14 @@ export default function Header() {
           <Link to="/cart" className="relative p-2">
             <ShoppingCart size={22} className="text-foreground" />
             {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full">{itemCount > 99 ? '99+' : itemCount}</span>
+              <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold min-w-[18px] min-h-[18px] flex items-center justify-center rounded-full">{itemCount > 99 ? '99+' : itemCount}</span>
             )}
           </Link>
         </div>
 
-        {/* Mobile Search Bar — fully functional like desktop */}
+        {/* Mobile Search Bar */}
         <div className="lg:hidden px-4 pb-2">
-          <div ref={mobileSearchRef} className="relative flex gap-2">
-            <form onSubmit={handleSearch} className="relative flex-1 flex gap-2">
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                  placeholder={placeholderText}
-                  className="pl-9 pr-20 h-9 rounded-xl bg-muted border-0 text-sm truncate"
-                />
-                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
-                  <Search size={12} /> Search
-                </button>
-              </div>
-            </form>
-            <button type="button" onClick={() => setFilterOpen(true)} className="h-9 w-9 rounded-xl border border-border bg-card flex items-center justify-center shrink-0">
-              <SlidersHorizontal size={14} className="text-muted-foreground" />
-            </button>
-            <SuggestionsDropdown />
-          </div>
+          <SearchBar isMobile />
         </div>
 
         {/* Desktop Header */}
@@ -175,20 +180,8 @@ export default function Header() {
             <img src={settings.appLogo || '/logo.png'} alt={settings.appName} className="w-9 h-9 object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
             <span className="font-bold text-xl text-primary">{settings.appName}</span>
           </Link>
-          <div ref={searchRef} className="flex-1 max-w-xl relative">
-            <form onSubmit={handleSearch} className="relative flex gap-2">
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder={placeholderText} className="pl-9 pr-20 rounded-xl bg-muted border-0 truncate" />
-                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
-                  <Search size={12} /> Search
-                </button>
-              </div>
-              <button type="button" onClick={() => setFilterOpen(true)} className="h-10 w-10 rounded-xl border border-border bg-card flex items-center justify-center shrink-0 hover:bg-muted transition-colors">
-                <SlidersHorizontal size={14} className="text-muted-foreground" />
-              </button>
-            </form>
-            <SuggestionsDropdown />
+          <div className="flex-1 max-w-xl">
+            <SearchBar />
           </div>
           <nav className="flex items-center gap-1">
             <Link to="/category" className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Categories</Link>
@@ -226,14 +219,13 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Filter Sheet — shared between mobile and desktop */}
+      {/* Filter Sheet */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
           <SheetHeader>
             <SheetTitle>Filters & Sort</SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto h-full pb-24 pt-4 space-y-6">
-            {/* Sort */}
             <div>
               <h3 className="font-semibold text-sm mb-3">Sort By</h3>
               <div className="flex flex-wrap gap-2">
@@ -244,8 +236,6 @@ export default function Header() {
                 ))}
               </div>
             </div>
-
-            {/* Price Range */}
             <div>
               <h3 className="font-semibold text-sm mb-3">Price Range</h3>
               <div className="flex items-center gap-3">
@@ -260,8 +250,6 @@ export default function Header() {
                 </div>
               </div>
             </div>
-
-            {/* Min Rating */}
             <div>
               <h3 className="font-semibold text-sm mb-3">Minimum Rating</h3>
               <div className="flex gap-2 flex-wrap">
@@ -272,14 +260,9 @@ export default function Header() {
                 ))}
               </div>
             </div>
-
             <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1" onClick={() => { setSort('popular'); setPriceRange([0, 50000]); setMinRating(0); }}>
-                Reset
-              </Button>
-              <Button className="flex-1" onClick={applyFilters}>
-                Apply Filters
-              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => { setSort('popular'); setPriceRange([0, 50000]); setMinRating(0); }}>Reset</Button>
+              <Button className="flex-1" onClick={applyFilters}>Apply Filters</Button>
             </div>
           </div>
         </SheetContent>
@@ -293,7 +276,7 @@ export default function Header() {
             <motion.div initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="fixed left-0 top-0 bottom-0 w-72 bg-card z-50 lg:hidden flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                   <img src={settings.appLogo || '/logo.png'} alt={settings.appName} className="w-8 h-8 object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
+                  <img src={settings.appLogo || '/logo.png'} alt={settings.appName} className="w-8 h-8 object-contain" onError={e => { (e.target as HTMLImageElement).src = '/logo.png'; }} />
                   <span className="font-bold text-lg text-primary">{settings.appName}</span>
                 </Link>
                 <button onClick={() => setMobileMenuOpen(false)} className="p-2"><X size={20} /></button>
