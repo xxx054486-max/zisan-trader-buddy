@@ -32,6 +32,7 @@ export default function Header() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   // Filter states stored in header, passed via URL
@@ -68,9 +69,12 @@ export default function Header() {
     }
   }, [searchQuery, products]);
 
+  // Close suggestions when clicking outside (both desktop and mobile)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setShowSuggestions(false);
+      const clickedOutsideDesktop = searchRef.current && !searchRef.current.contains(e.target as Node);
+      const clickedOutsideMobile = mobileSearchRef.current && !mobileSearchRef.current.contains(e.target as Node);
+      if (clickedOutsideDesktop && clickedOutsideMobile) setShowSuggestions(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -90,10 +94,6 @@ export default function Header() {
     const currentQ = searchQuery.trim() || '';
     navigate(`/search?q=${encodeURIComponent(currentQ)}&sort=${sort}&minPrice=${priceRange[0]}&maxPrice=${priceRange[1]}&minRating=${minRating}`);
     setFilterOpen(false);
-  };
-
-  const handleSearchBarClick = () => {
-    navigate('/search');
   };
 
   const SuggestionsDropdown = () => (
@@ -144,18 +144,28 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Sticky search bar mobile */}
+        {/* Mobile Search Bar — fully functional like desktop */}
         <div className="lg:hidden px-4 pb-2">
-          <div className="relative flex gap-2">
-            <div className="relative flex-1" onClick={handleSearchBarClick}>
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <div className="pl-9 pr-3 h-9 rounded-xl bg-muted border-0 text-sm flex items-center text-muted-foreground cursor-pointer overflow-hidden">
-                <span className="truncate">{placeholderText}</span>
+          <div ref={mobileSearchRef} className="relative flex gap-2">
+            <form onSubmit={handleSearch} className="relative flex-1 flex gap-2">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  placeholder={placeholderText}
+                  className="pl-9 pr-20 h-9 rounded-xl bg-muted border-0 text-sm truncate"
+                />
+                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
+                  <Search size={12} /> Search
+                </button>
               </div>
-            </div>
+            </form>
             <button type="button" onClick={() => setFilterOpen(true)} className="h-9 w-9 rounded-xl border border-border bg-card flex items-center justify-center shrink-0">
               <SlidersHorizontal size={14} className="text-muted-foreground" />
             </button>
+            <SuggestionsDropdown />
           </div>
         </div>
 
@@ -216,7 +226,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Filter Sheet */}
+      {/* Filter Sheet — shared between mobile and desktop */}
       <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
         <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
           <SheetHeader>
