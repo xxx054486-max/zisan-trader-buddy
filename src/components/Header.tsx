@@ -145,16 +145,13 @@ export default function Header() {
         </div>
 
         {/* Sticky search bar mobile */}
-        <div className="lg:hidden px-4 pb-2" ref={searchRef}>
+        <div className="lg:hidden px-4 pb-2">
           <div className="relative flex gap-2">
             <div className="relative flex-1" onClick={handleSearchBarClick}>
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <div className="pl-9 pr-10 h-9 rounded-xl bg-muted border-0 text-sm flex items-center text-muted-foreground cursor-pointer">
-                {placeholderText}
+              <div className="pl-9 pr-3 h-9 rounded-xl bg-muted border-0 text-sm flex items-center text-muted-foreground cursor-pointer overflow-hidden">
+                <span className="truncate">{placeholderText}</span>
               </div>
-              <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                <Search size={12} />
-              </button>
             </div>
             <button type="button" onClick={() => setFilterOpen(true)} className="h-9 w-9 rounded-xl border border-border bg-card flex items-center justify-center shrink-0">
               <SlidersHorizontal size={14} className="text-muted-foreground" />
