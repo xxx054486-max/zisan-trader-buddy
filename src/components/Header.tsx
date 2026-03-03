@@ -35,6 +35,7 @@ export default function Header() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   const [sort, setSort] = useState('popular');
   const [priceRange, setPriceRange] = useState([0, 50000]);
@@ -44,17 +45,21 @@ export default function Header() {
     ? products[placeholderIndex % products.length]?.name?.slice(0, 30) ?? ''
     : '';
 
-  // Typewriter placeholder animation
+  // Smooth typewriter placeholder animation
   useEffect(() => {
     if (!targetPlaceholder) return;
     setIsTyping(true);
     setDisplayedPlaceholder('');
     let i = 0;
+    // Erase first, then type — gives a smooth feel
     const type = setInterval(() => {
       i++;
       setDisplayedPlaceholder(targetPlaceholder.slice(0, i));
-      if (i >= targetPlaceholder.length) { clearInterval(type); setIsTyping(false); }
-    }, 45);
+      if (i >= targetPlaceholder.length) {
+        clearInterval(type);
+        setIsTyping(false);
+      }
+    }, 55);
     return () => clearInterval(type);
   }, [targetPlaceholder]);
 
@@ -113,7 +118,11 @@ export default function Header() {
     showSuggestions && suggestions.length > 0 ? (
       <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden">
         {suggestions.map(s => (
-          <button key={s.id} onClick={() => { navigate(`/product/${s.id}`); setShowSuggestions(false); setSearchQuery(''); }} className="flex items-center gap-3 w-full px-3 py-2 hover:bg-muted transition-colors text-left">
+          <button
+            key={s.id}
+            onClick={() => { navigate(`/product/${s.id}`); setShowSuggestions(false); setSearchQuery(''); }}
+            className="flex items-center gap-3 w-full px-3 py-2 hover:bg-muted transition-colors text-left"
+          >
             {s.image && <img src={s.image} alt="" className="w-8 h-8 rounded-lg object-cover" />}
             <span className="text-sm truncate">{s.name}</span>
           </button>
@@ -125,42 +134,102 @@ export default function Header() {
   const PointsBadge = () => {
     if (!user || !userData) return null;
     return (
-      <button onClick={() => navigate('/profile?tab=rewards')} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors" title="Loyalty Points">
+      <button
+        onClick={() => navigate('/profile?tab=rewards')}
+        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors"
+        title="Loyalty Points"
+      >
         <Star size={12} className="text-accent fill-accent" />
         <span className="text-xs font-bold text-accent">{userData.loyaltyPoints || 0}</span>
       </button>
     );
   };
 
+  // ── Daraz-style Search Bar ──────────────────────────────────────────────────
   const SearchBar = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div ref={isMobile ? mobileSearchRef : searchRef} className="relative flex gap-2">
-      <form onSubmit={handleSearch} className="relative flex-1 flex gap-2">
-        <div className={`relative flex-1 rounded-xl bg-muted ring-1 ring-border focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-[0_0_0_4px_hsl(var(--primary)/0.08)] transition-all duration-200 ${isMobile ? 'h-9' : 'h-10'}`}>
+      <form onSubmit={handleSearch} className="relative flex-1">
+        {/*
+          Outer wrapper acts as the visual "input box".
+          Border: dotted + subtle, thickens & turns primary on focus.
+          Layout: input text on the left, search button flush on the right (Daraz pattern).
+        */}
+        <div
+          className={[
+            'flex items-center overflow-hidden transition-all duration-200',
+            'rounded-xl border-2 border-dotted bg-background',
+            isMobile ? 'h-10' : 'h-11',
+            isFocused
+              ? 'border-primary shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]'
+              : 'border-border/70 hover:border-primary/50',
+          ].join(' ')}
+        >
+          {/* Search icon inside box – Daraz style */}
+          <Search
+            size={15}
+            strokeWidth={2.2}
+            className={`ml-3 shrink-0 transition-colors duration-200 ${isFocused ? 'text-primary' : 'text-muted-foreground'}`}
+          />
+
+          {/* Text input */}
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-            placeholder={displayedPlaceholder + (isTyping ? '|' : '')}
-            className={`w-full h-full bg-transparent outline-none pl-3 pr-24 text-sm placeholder:text-muted-foreground truncate`}
+            onFocus={() => { setIsFocused(true); suggestions.length > 0 && setShowSuggestions(true); }}
+            onBlur={() => setIsFocused(false)}
+            placeholder={displayedPlaceholder + (isTyping ? '▌' : '')}
+            className="flex-1 h-full bg-transparent outline-none px-2.5 text-sm placeholder:text-muted-foreground/70 truncate"
           />
+
+          {/* Clear button */}
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="p-1.5 mr-1 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={13} />
+            </button>
+          )}
+
+          {/* Search button – flush right, rounded only on right side */}
           <button
             type="submit"
-            className={`absolute right-1.5 top-1/2 -translate-y-1/2 px-3 rounded-lg bg-primary hover:bg-primary/90 active:scale-95 text-primary-foreground text-xs font-semibold flex items-center gap-1.5 transition-all duration-150 shadow-sm ${isMobile ? 'h-6' : 'h-7'}`}
+            className={[
+              'shrink-0 flex items-center justify-center gap-1.5',
+              'bg-primary hover:bg-primary/90 active:scale-95',
+              'text-primary-foreground font-semibold transition-all duration-150',
+              'rounded-r-[10px]',           // match outer radius − border-width
+              isMobile
+                ? 'h-full px-3.5 text-xs'
+                : 'h-full px-5 text-sm',
+            ].join(' ')}
           >
-            <Search size={11} strokeWidth={2.5} /> Search
+            <Search size={isMobile ? 13 : 14} strokeWidth={2.5} />
+            {/* Hide label on very small screens to keep it tidy */}
+            <span className={isMobile ? 'hidden xs:inline' : ''}>Search</span>
           </button>
         </div>
       </form>
+
+      {/* Filter button */}
       <button
         type="button"
         onClick={() => setFilterOpen(true)}
-        className={`rounded-xl border border-border bg-card flex items-center justify-center shrink-0 hover:bg-muted hover:border-primary/40 active:scale-95 transition-all duration-150 shadow-sm ${isMobile ? 'h-9 w-9' : 'h-10 w-10'}`}
+        className={[
+          'rounded-xl border-2 border-dotted border-border/70 bg-background',
+          'flex items-center justify-center shrink-0',
+          'hover:border-primary/50 hover:bg-muted active:scale-95 transition-all duration-150',
+          isMobile ? 'h-10 w-10' : 'h-11 w-11',
+        ].join(' ')}
       >
         <SlidersHorizontal size={14} className="text-muted-foreground" />
       </button>
+
       <SuggestionsDropdown />
     </div>
   );
+  // ───────────────────────────────────────────────────────────────────────────
 
   if (isAdmin) return null;
 
@@ -188,7 +257,7 @@ export default function Header() {
         </div>
 
         {/* Mobile Search Bar */}
-        <div className="lg:hidden px-4 pb-2">
+        <div className="lg:hidden px-4 pb-2.5">
           <SearchBar isMobile />
         </div>
 
