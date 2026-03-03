@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Slider } from '@/components/ui/slider';
+
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SORT_OPTIONS = [
