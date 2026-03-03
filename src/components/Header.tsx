@@ -33,21 +33,36 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [displayedPlaceholder, setDisplayedPlaceholder] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
   const [sort, setSort] = useState('popular');
   const [priceRange, setPriceRange] = useState([0, 50000]);
   const [minRating, setMinRating] = useState(0);
 
-  // Rotating placeholder — product name only, no icon/text prefix
-  const placeholderText = products.length > 0
-    ? products[placeholderIndex % products.length]?.name?.slice(0, 30) ?? 'Search products...'
-    : 'Search products...';
+  const targetPlaceholder = products.length > 0
+    ? products[placeholderIndex % products.length]?.name?.slice(0, 30) ?? ''
+    : '';
+
+  // Typewriter placeholder animation
+  useEffect(() => {
+    if (!targetPlaceholder) return;
+    setIsTyping(true);
+    setDisplayedPlaceholder('');
+    let i = 0;
+    const type = setInterval(() => {
+      i++;
+      setDisplayedPlaceholder(targetPlaceholder.slice(0, i));
+      if (i >= targetPlaceholder.length) { clearInterval(type); setIsTyping(false); }
+    }, 45);
+    return () => clearInterval(type);
+  }, [targetPlaceholder]);
 
   useEffect(() => {
     if (products.length === 0) return;
     const interval = setInterval(() => {
       setPlaceholderIndex(prev => (prev + 1) % products.length);
-    }, 3000);
+    }, 3500);
     return () => clearInterval(interval);
   }, [products.length]);
 
@@ -120,23 +135,26 @@ export default function Header() {
   const SearchBar = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div ref={isMobile ? mobileSearchRef : searchRef} className="relative flex gap-2">
       <form onSubmit={handleSearch} className="relative flex-1 flex gap-2">
-        <div className="relative flex-1">
-          <Input
+        <div className={`relative flex-1 rounded-xl bg-muted ring-1 ring-border focus-within:ring-2 focus-within:ring-primary/50 focus-within:shadow-[0_0_0_4px_hsl(var(--primary)/0.08)] transition-all duration-200 ${isMobile ? 'h-9' : 'h-10'}`}>
+          <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-            placeholder={placeholderText}
-            className={`pr-20 rounded-xl bg-muted border-0 truncate ${isMobile ? 'h-9 text-sm' : ''}`}
+            placeholder={displayedPlaceholder + (isTyping ? '|' : '')}
+            className={`w-full h-full bg-transparent outline-none pl-3 pr-24 text-sm placeholder:text-muted-foreground truncate`}
           />
-          <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
-            <Search size={12} /> Search
+          <button
+            type="submit"
+            className={`absolute right-1.5 top-1/2 -translate-y-1/2 px-3 rounded-lg bg-primary hover:bg-primary/90 active:scale-95 text-primary-foreground text-xs font-semibold flex items-center gap-1.5 transition-all duration-150 shadow-sm ${isMobile ? 'h-6' : 'h-7'}`}
+          >
+            <Search size={11} strokeWidth={2.5} /> Search
           </button>
         </div>
       </form>
       <button
         type="button"
         onClick={() => setFilterOpen(true)}
-        className={`rounded-xl border border-border bg-card flex items-center justify-center shrink-0 hover:bg-muted transition-colors ${isMobile ? 'h-9 w-9' : 'h-10 w-10'}`}
+        className={`rounded-xl border border-border bg-card flex items-center justify-center shrink-0 hover:bg-muted hover:border-primary/40 active:scale-95 transition-all duration-150 shadow-sm ${isMobile ? 'h-9 w-9' : 'h-10 w-10'}`}
       >
         <SlidersHorizontal size={14} className="text-muted-foreground" />
       </button>
