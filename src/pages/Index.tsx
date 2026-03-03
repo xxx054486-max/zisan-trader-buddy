@@ -37,7 +37,7 @@ export default function Index() {
                 <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${currentBanner * 100}%)` }}>
                   {banners.map(banner => (
                     <Link key={banner.id} to={banner.link || '/'} className="block shrink-0 w-full">
-                      <img src={banner.image} alt="" className="w-full h-44 sm:h-52 lg:h-[340px] object-cover" />
+                      <img src={banner.image} alt="" className="w-full h-32 sm:h-44 lg:h-[340px] object-cover" />
                     </Link>
                   ))}
                 </div>
@@ -50,7 +50,7 @@ export default function Index() {
                 )}
               </div>
             ) : (
-              <div className="bg-muted rounded-2xl h-44 sm:h-52 lg:h-[340px] flex items-center justify-center text-muted-foreground">
+              <div className="bg-muted rounded-2xl h-32 sm:h-44 lg:h-[340px] flex items-center justify-center text-muted-foreground">
                 <Package size={40} className="opacity-30" />
               </div>
             )}
@@ -82,15 +82,15 @@ export default function Index() {
           <h2 className="font-bold text-base">Categories</h2>
           <Link to="/category" className="text-primary text-sm font-medium flex items-center gap-1">See all <ChevronRight size={14} /></Link>
         </div>
-        <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide pb-2">
+         <div className="flex gap-2.5 px-4 overflow-x-auto scrollbar-hide pb-2">
           {cLoading
             ? Array.from({ length: 6 }).map((_, i) => <CategorySkeleton key={i} />)
             : categories.map(cat => (
-              <Link key={cat.id} to={`/category/${cat.id}`} className="flex flex-col items-center gap-1.5 shrink-0">
-                <div className="w-14 h-14 rounded-2xl overflow-hidden bg-muted border border-border/50">
+              <Link key={cat.id} to={`/category/${cat.id}`} className="flex flex-col items-center gap-1 shrink-0">
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-muted border border-border/50">
                   <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" loading="lazy" />
                 </div>
-                <span className="text-[11px] font-medium text-center w-16 truncate">{cat.name}</span>
+                <span className="text-[10px] font-medium text-center w-14 truncate">{cat.name}</span>
               </Link>
             ))
           }

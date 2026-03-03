@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, LogOut, User, Package, Settings, HeadphonesIcon, Star, SlidersHorizontal } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, LogOut, User, Package, Settings, HeadphonesIcon, Star, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProducts, useSettings } from '@/hooks/useFirestoreData';
@@ -8,7 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Slider } from '@/components/ui/slider';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const SORT_OPTIONS = [
+  { value: 'popular', label: 'Popularity' },
+  { value: 'price_asc', label: 'Price: Low → High' },
+  { value: 'price_desc', label: 'Price: High → Low' },
+  { value: 'rating', label: 'Rating' },
+  { value: 'newest', label: 'Newest' },
+];
 
 export default function Header() {
   const { itemCount } = useCart();
@@ -20,8 +30,14 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<{ id: string; name: string; image: string }[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  // Filter states stored in header, passed via URL
+  const [sort, setSort] = useState('popular');
+  const [priceRange, setPriceRange] = useState([0, 50000]);
+  const [minRating, setMinRating] = useState(0);
 
   const placeholderText = products.length > 0
     ? `Search "${products[placeholderIndex % products.length]?.name?.slice(0, 25)}..."`
@@ -64,10 +80,20 @@ export default function Header() {
     e?.preventDefault();
     const q = searchQuery.trim() || products[placeholderIndex % products.length]?.name || '';
     if (q) {
-      navigate(`/search?q=${encodeURIComponent(q)}`);
+      navigate(`/search?q=${encodeURIComponent(q)}&sort=${sort}&minPrice=${priceRange[0]}&maxPrice=${priceRange[1]}&minRating=${minRating}`);
       setShowSuggestions(false);
       setSearchQuery('');
     }
+  };
+
+  const applyFilters = () => {
+    const currentQ = searchQuery.trim() || '';
+    navigate(`/search?q=${encodeURIComponent(currentQ)}&sort=${sort}&minPrice=${priceRange[0]}&maxPrice=${priceRange[1]}&minRating=${minRating}`);
+    setFilterOpen(false);
+  };
+
+  const handleSearchBarClick = () => {
+    navigate('/search');
   };
 
   const SuggestionsDropdown = () => (
@@ -120,19 +146,20 @@ export default function Header() {
 
         {/* Sticky search bar mobile */}
         <div className="lg:hidden px-4 pb-2" ref={searchRef}>
-          <form onSubmit={handleSearch} className="relative flex gap-2">
-            <div className="relative flex-1">
+          <div className="relative flex gap-2">
+            <div className="relative flex-1" onClick={handleSearchBarClick}>
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder={placeholderText} className="pl-9 pr-3 h-9 rounded-xl bg-muted border-0 text-sm" />
-              <SuggestionsDropdown />
+              <div className="pl-9 pr-10 h-9 rounded-xl bg-muted border-0 text-sm flex items-center text-muted-foreground cursor-pointer">
+                {placeholderText}
+              </div>
+              <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
+                <Search size={12} />
+              </button>
             </div>
-            <button type="submit" className="h-9 px-3 rounded-xl bg-primary text-primary-foreground text-xs font-semibold shrink-0">
-              <Search size={14} />
-            </button>
-            <button type="button" onClick={() => navigate('/search')} className="h-9 w-9 rounded-xl border border-border bg-card flex items-center justify-center shrink-0">
+            <button type="button" onClick={() => setFilterOpen(true)} className="h-9 w-9 rounded-xl border border-border bg-card flex items-center justify-center shrink-0">
               <SlidersHorizontal size={14} className="text-muted-foreground" />
             </button>
-          </form>
+          </div>
         </div>
 
         {/* Desktop Header */}
@@ -145,10 +172,12 @@ export default function Header() {
             <form onSubmit={handleSearch} className="relative flex gap-2">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder={placeholderText} className="pl-9 rounded-xl bg-muted border-0" />
+                <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} placeholder={placeholderText} className="pl-9 pr-16 rounded-xl bg-muted border-0" />
+                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1">
+                  <Search size={12} /> Search
+                </button>
               </div>
-              <Button type="submit" size="sm" className="h-10 px-4 rounded-xl">Search</Button>
-              <button type="button" onClick={() => navigate('/search')} className="h-10 w-10 rounded-xl border border-border bg-card flex items-center justify-center shrink-0 hover:bg-muted transition-colors">
+              <button type="button" onClick={() => setFilterOpen(true)} className="h-10 w-10 rounded-xl border border-border bg-card flex items-center justify-center shrink-0 hover:bg-muted transition-colors">
                 <SlidersHorizontal size={14} className="text-muted-foreground" />
               </button>
             </form>
@@ -189,6 +218,59 @@ export default function Header() {
           </div>
         </div>
       </header>
+
+      {/* Filter Sheet */}
+      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+        <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+          <SheetHeader>
+            <SheetTitle>Filters & Sort</SheetTitle>
+          </SheetHeader>
+          <div className="overflow-y-auto h-full pb-24 pt-4 space-y-6">
+            {/* Sort */}
+            <div>
+              <h3 className="font-semibold text-sm mb-3">Sort By</h3>
+              <div className="flex flex-wrap gap-2">
+                {SORT_OPTIONS.map(o => (
+                  <button key={o.value} onClick={() => setSort(o.value)} className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${sort === o.value ? 'border-primary bg-primary/10 text-primary' : 'border-border'}`}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Range */}
+            <div>
+              <h3 className="font-semibold text-sm mb-3">Price Range</h3>
+              <Slider value={priceRange} min={0} max={50000} step={100} onValueChange={setPriceRange} />
+              <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                <span>৳{priceRange[0]}</span>
+                <span>৳{priceRange[1]}</span>
+              </div>
+            </div>
+
+            {/* Min Rating */}
+            <div>
+              <h3 className="font-semibold text-sm mb-3">Minimum Rating</h3>
+              <div className="flex gap-2 flex-wrap">
+                {[0, 3, 4, 4.5].map(r => (
+                  <button key={r} onClick={() => setMinRating(r)} className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${minRating === r ? 'border-primary bg-primary/10 text-primary' : 'border-border'}`}>
+                    {r === 0 ? 'All' : `${r}+ ★`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button variant="outline" className="flex-1" onClick={() => { setSort('popular'); setPriceRange([0, 50000]); setMinRating(0); }}>
+                Reset
+              </Button>
+              <Button className="flex-1" onClick={applyFilters}>
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Mobile Menu Drawer */}
       <AnimatePresence>
